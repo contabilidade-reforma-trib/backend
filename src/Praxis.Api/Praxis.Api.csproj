@@ -20,4 +20,14 @@
     <ProjectReference Include="..\Praxis.Shared\Praxis.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!--
+      Por padrão o publish leva o appsettings.Development.json junto, e ele
+      carrega as credenciais locais. O .dockerignore já o mantém fora da imagem,
+      mas cortar aqui garante que nenhum publish o carregue, seja qual for a
+      forma de empacotar. Segredo em produção vem de variável de ambiente.
+    -->
+    <Content Update="appsettings.Development.json" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+
 </Project>

@@ -6,10 +6,16 @@
 |---|---|
 | Repositório | `contabilidade-reforma-trib/backend` |
 | Root Directory | *(vazio — o repositório já é o backend)* |
-| Build | detectado automaticamente pelo Nixpacks (.NET 10) |
-| Start Command | `dotnet src/Praxis.Api/bin/Release/net10.0/Praxis.Api.dll` *(só se a detecção falhar)* |
+| Build | **Dockerfile**, na raiz do repositório |
+| Start Command | *(vazio — o `ENTRYPOINT` do Dockerfile resolve)* |
 
-O Railway injeta a porta em `PORT`. O ASP.NET Core lê `ASPNETCORE_URLS` — por isso a variável abaixo é obrigatória, senão a aplicação sobe na 5000 e o roteador não a encontra.
+### Por que Dockerfile e não a detecção automática
+
+O Railpack, detector padrão do Railway, procura um `.csproj` ou `.sln` **na raiz** do repositório. Aqui a raiz tem `Praxis.slnx` — formato novo, que ele ainda não reconhece — e os projetos vivem em `src/`. A detecção falha antes de começar, com um erro que só lista os arquivos da raiz.
+
+Com um `Dockerfile` presente, o Railway o usa e a detecção sai do caminho. O build é multi-estágio: SDK para compilar, imagem de runtime para rodar.
+
+A porta é lida de `PORT` **em tempo de execução**, pelo `ENTRYPOINT`, com 8080 de padrão. Por isso **não é preciso configurar `ASPNETCORE_URLS`** — que é justamente onde esse tipo de deploy costuma quebrar.
 
 ## 2. Variáveis de ambiente
 
@@ -19,10 +25,10 @@ O ASP.NET Core lê configuração aninhada com **dois underscores** no lugar do 
 
 | Variável | Valor |
 |---|---|
-| `ASPNETCORE_URLS` | `http://0.0.0.0:${PORT}` |
-| `ASPNETCORE_ENVIRONMENT` | `Production` |
 | `ConnectionStrings__Principal` | `Host=...neon.tech;Database=neondb;Username=...;Password=...;SSL Mode=Require` |
 | `Cors__OrigensPermitidas__0` | `https://<seu-projeto>.vercel.app` |
+
+`ASPNETCORE_ENVIRONMENT` já vem como `Production` do Dockerfile; só defina se quiser outro valor.
 
 > **CORS é lista indexada.** Cada origem é uma variável própria: `Cors__OrigensPermitidas__0`, `__1`, `__2`. Sem nenhuma configurada a API aceita qualquer origem — bom para destravar a POC, ruim para deixar assim.
 >

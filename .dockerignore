@@ -1,0 +1,22 @@
+# Fora da imagem: nada aqui é necessário para compilar ou rodar a API.
+# Manter o contexto pequeno também deixa o build do Railway bem mais rápido.
+
+**/bin/
+**/obj/
+.vs/
+.git/
+.githooks/
+.github/
+.agents/
+.claude/
+docs/
+tests/
+*.md
+.gitignore
+
+# Segredo nunca entra na imagem. Em produção a configuração vem das
+# variáveis de ambiente do Railway.
+**/appsettings.Development.json
+**/appsettings.Local.json
+**/*.secrets.json
+.env
