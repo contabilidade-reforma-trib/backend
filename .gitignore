@@ -55,3 +55,15 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+# ---- Segredos locais desta POC: NUNCA commitar ----
+appsettings.Development.json
+appsettings.Local.json
+appsettings.*.Local.json
+.env
+.env.local
+*.secrets.json
+secrets/
+
+# Visual Studio
+.vs/

@@ -1,0 +1,16 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/src/">
+    <Project Path="src/Praxis.Api/Praxis.Api.csproj" />
+    <Project Path="src/Praxis.Modules/Praxis.Modules.csproj" />
+    <Project Path="src/Praxis.Shared/Praxis.Shared.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Praxis.IntegrationTests/Praxis.IntegrationTests.csproj" />
+    <Project Path="tests/Praxis.UnitTests/Praxis.UnitTests.csproj" />
+  </Folder>
+</Solution>

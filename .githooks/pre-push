@@ -1,0 +1,26 @@
+#!/bin/sh
+#
+# Portão de push — backend Praxis.
+# A suíte INTEIRA (unidade e integração) precisa estar verde antes de qualquer push.
+# Vale para pessoa e para IA. Ver CLAUDE.md §2.7 e docs/regras-desenvolvimento.md §8.2.
+#
+# Ative uma vez por clone:
+#   git config core.hooksPath .githooks
+
+set -e
+
+printf '\n[pre-push] Rodando a suite inteira antes do push...\n\n'
+
+saida=$(dotnet test --nologo 2>&1) || falhou=1
+
+echo "$saida" | tail -25
+
+if [ "$falhou" = "1" ]; then
+  printf '\n[pre-push] BLOQUEADO: a suite nao passou.\n'
+  printf '[pre-push] Corrija antes de dar push. Nao marque teste como ignorado.\n'
+  printf '[pre-push] Se a falha for em area que voce nao tocou, avise a pessoa\n'
+  printf '[pre-push] responsavel em vez de contornar.\n\n'
+  exit 1
+fi
+
+printf '\n[pre-push] Suite verde. Push liberado.\n\n'
