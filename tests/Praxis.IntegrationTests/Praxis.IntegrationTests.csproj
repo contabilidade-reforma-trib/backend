@@ -22,8 +22,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Praxis.Api\Praxis.Api.csproj" />
-    <ProjectReference Include="..\..\src\Praxis.Modules\Praxis.Modules.csproj" />
     <ProjectReference Include="..\..\src\Praxis.Shared\Praxis.Shared.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Identity\Praxis.Identity.Infrastructure\Praxis.Identity.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Copilot\Praxis.Copilot.Infrastructure\Praxis.Copilot.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

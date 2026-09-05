@@ -16,8 +16,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Praxis.Modules\Praxis.Modules.csproj" />
     <ProjectReference Include="..\Praxis.Shared\Praxis.Shared.csproj" />
+    <ProjectReference Include="..\Modules\Identity\Praxis.Identity.Infrastructure\Praxis.Identity.Infrastructure.csproj" />
+    <ProjectReference Include="..\Modules\Copilot\Praxis.Copilot.Infrastructure\Praxis.Copilot.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -19,8 +19,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Praxis.Modules\Praxis.Modules.csproj" />
     <ProjectReference Include="..\..\src\Praxis.Shared\Praxis.Shared.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Identity\Praxis.Identity.Domain\Praxis.Identity.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Copilot\Praxis.Copilot.Domain\Praxis.Copilot.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Copilot\Praxis.Copilot.Application\Praxis.Copilot.Application.csproj" />
   </ItemGroup>
 
 </Project>

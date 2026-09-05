@@ -6,8 +6,18 @@
   </Configurations>
   <Folder Name="/src/">
     <Project Path="src/Praxis.Api/Praxis.Api.csproj" />
-    <Project Path="src/Praxis.Modules/Praxis.Modules.csproj" />
     <Project Path="src/Praxis.Shared/Praxis.Shared.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Copilot/">
+    <Project Path="src/Modules/Copilot/Praxis.Copilot.Application/Praxis.Copilot.Application.csproj" />
+    <Project Path="src/Modules/Copilot/Praxis.Copilot.Domain/Praxis.Copilot.Domain.csproj" />
+    <Project Path="src/Modules/Copilot/Praxis.Copilot.Infrastructure/Praxis.Copilot.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Identity/">
+    <Project Path="src/Modules/Identity/Praxis.Identity.Application/Praxis.Identity.Application.csproj" />
+    <Project Path="src/Modules/Identity/Praxis.Identity.Domain/Praxis.Identity.Domain.csproj" />
+    <Project Path="src/Modules/Identity/Praxis.Identity.Infrastructure/Praxis.Identity.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Praxis.IntegrationTests/Praxis.IntegrationTests.csproj" />

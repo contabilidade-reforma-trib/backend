@@ -1,35 +1,38 @@
-using Praxis.Api.Configuracao;
+using Praxis.Api.Configuration;
 using Praxis.Api.Endpoints;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
-    .AdicionarPersistencia(builder.Configuration)
-    .AdicionarArmazenamentoDeObjetos(builder.Configuration)
-    .AdicionarModulos()
-    .AdicionarCorsDoFrontend(builder.Configuration)
-    .AdicionarDocumentacao();
+    .AddPersistence(builder.Configuration)
+    .AddAi(builder.Configuration)
+    .AddObjectStorage(builder.Configuration)
+    .AddModules()
+    .AddFrontendCors(builder.Configuration)
+    .AddApiDocumentation();
 
 var app = builder.Build();
 
-// Swagger fica ligado também em produção: é uma POC, e a pessoa que está
-// integrando o front precisa enxergar o contrato sem subir nada localmente.
+// Swagger stays on in production too: this is a prototype, and whoever wires
+// the frontend needs to see the contract without running anything locally.
 app.UseSwagger();
-app.UseSwaggerUI(opcoes =>
+app.UseSwaggerUI(options =>
 {
-    opcoes.SwaggerEndpoint("/swagger/v1/swagger.json", "Praxis API v1");
-    opcoes.DocumentTitle = "Praxis API";
-    opcoes.RoutePrefix = "swagger";
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "Praxis API v1");
+    options.DocumentTitle = "Praxis API";
+    options.RoutePrefix = "swagger";
 });
 
-app.UseCors(ConfiguracaoDeCors.NomeDaPolitica);
+app.UseCors(CorsConfiguration.PolicyName);
 
-app.MapEndpointsDeSaude();
+app.MapHealthEndpoints();
+app.MapUserEndpoints();
+app.MapKnowledgeEndpoints();
+app.MapVideoEndpoints();
 
-app.MapGet("/", () => Results.Redirect("/swagger"))
-    .ExcludeFromDescription();
+app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
 
 app.Run();
 
-/// <summary>Exposto para que os testes de integração possam subir a API em memória.</summary>
+/// <summary>Exposed so integration tests can boot the API in memory.</summary>
 public partial class Program;

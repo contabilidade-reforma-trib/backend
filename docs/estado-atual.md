@@ -6,64 +6,57 @@ Atualize este arquivo ao final de **toda** sessão. É por aqui que a próxima s
 
 ## Onde estamos
 
-API de pé, conectada ao Neon, com as entidades de Identidade e Assinaturas, Swagger e healthcheck. **24 testes verdes** (18 de unidade, 6 de integração). Nenhum endpoint de negócio ainda — só saúde.
+API de pé com **`User`** e a **estrutura de RAG** funcionando ponta a ponta contra o Neon. **24 testes verdes** (17 de unidade, 7 de integração). Código todo em inglês (D-15), domínio deliberadamente mínimo até o negócio estar claro (D-16).
+
+## Estrutura
+
+Um projeto por camada de cada módulo — a fronteira é imposta pelo compilador (D-19).
+
+```
+src/
+  Praxis.Api/                    endpoints, DI, Swagger
+  Praxis.Shared/                 Result, IClock, IAiProvider, IObjectStorage, R2ObjectStorage
+  Modules/
+    Identity/                    Praxis.Identity.{Domain,Application,Infrastructure}
+    Copilot/                     Praxis.Copilot.{Domain,Application,Infrastructure}
+tests/
+  Praxis.UnitTests/  Praxis.IntegrationTests/
+```
+
+**Um DbContext por módulo**, mesmo banco, tabela de histórico de migration própria para cada.
 
 ## Stack
 
 | Peça | Versão | Observação |
 |---|---|---|
-| .NET | 10 | Solução em `Praxis.slnx` (formato novo) |
-| EF Core + Npgsql | 10.0.11 | Migration `Inicial` já aplicada no Neon |
-| Swashbuckle | — | Swagger UI em `/swagger`, ligado também em produção |
-| AWSSDK.S3 | — | Falando com o Cloudflare R2, que usa o protocolo S3 |
-| xUnit | 2.9.3 | `FatoDeIntegracao` pula o teste quando não há banco configurado |
+| .NET | 10 | Solução em `Praxis.slnx` |
+| EF Core + Npgsql | 10.0.11 | Migration `Initial` por contexto, aplicada no Neon |
+| pgvector | — | `Pgvector.EntityFrameworkCore`, coluna `vector(1536)` |
+| Swashbuckle | — | Swagger em `/swagger`, ligado também em produção |
+| AWSSDK.S3 | — | Cloudflare R2 pelo protocolo S3 |
+| xUnit | 2.9.3 | `IntegrationFact` pula o teste sem banco configurado |
 
 ## Já existe
 
-**Compartilhado (`Praxis.Shared`)**
-- `Result` / `Result<T>` e `Erro` — falha esperada não vira exceção
-- `IRelogio` + `RelogioDoSistema` — tempo injetado, testável
-- `EntidadeBase` — Id, CriadoEm, AtualizadoEm em UTC
-- `IArmazenamentoDeObjetos` + `ArmazenamentoEmR2` — envio, URL assinada de leitura e de escrita, existência, remoção
-- `OpcoesDeArmazenamento.EstaConfigurado` — sem credencial a API sobe mesmo assim
+**Identity** — `User` com nome, e-mail (único, normalizado) e telefone. `IUserRepository` com paginação.
 
-**Identidade**
-- `Organizacao` — valida CPF/CNPJ, impede e-mail duplicado na organização
-- `Usuario` — normaliza e-mail, papel, registro profissional, telefone
-- `PerfilDeUso` — área, regime, setores e dor atual: as quatro perguntas do cadastro
-- `IRepositorioDeOrganizacoes` + implementação
+**Copilot (RAG)** — `KnowledgeDocument` + `DocumentChunk` com embedding em pgvector. `IngestDocument` (fatia, gera embedding, grava; reindexar substitui em vez de duplicar) e `SearchKnowledge` (pergunta → vetor → vizinhos mais próximos, filtrando vigência e status). Vigência (`ValidFrom`/`ValidUntil`) já modelada e filtrada na consulta.
 
-**Assinaturas**
-- `Assinatura`, `DireitoDeUso`, `Pagamento`, com `Produto`, `SituacaoDaAssinatura`, `MeioDePagamento`
-- Regra: conceder acesso a produto já vigente **estende** a vigência em vez de criar direito duplicado
-- `IConsultaDeDireitoDeUso` — contrato público, devolve DTO, é a única porta do módulo
-- `IRepositorioDeAssinaturas` + implementação
+**IA** — `IAiProvider` com `DeterministicAiProvider` de reserva: vetores derivados de hash, centrados em zero. Roda a esteira inteira sem chave e sem custo. **Não** prova que a recuperação acha a passagem certa — isso exige embeddings reais.
 
-**Persistência**
-- `PraxisDbContext` com schema configurável — é o que permite o teste isolado
-- Mapeamento por módulo, tabelas prefixadas: `identidade_*`, `assinaturas_*`
-- Sem chave estrangeira entre módulos, de propósito: a fronteira vale também no schema
-- Migration `Inicial`, aplicada no Neon
+**Armazenamento** — `IObjectStorage` + `R2ObjectStorage`: envio, URL assinada de leitura e de escrita, existência, remoção.
 
-**API**
-- `GET /api/saude` — status, versão, ambiente, banco (conectado + latência) e armazenamento
-- `GET /api/saude/ping` — verificação mínima, não toca no banco
-- Swagger em `/swagger`; a raiz redireciona para lá
-- CORS existe como escape, mas **não é usado**: o front chega pelo BFF do Next (D-14). Lista vazia = nenhuma origem permitida
+**API** — `/api/health`, `/api/health/ping`, `POST|GET /api/users`, `GET /api/users/{id}`, `POST /api/knowledge/documents`, `POST /api/knowledge/search`, `POST /api/videos/upload-url`, `GET /api/videos/playback-url`. Todos no Swagger.
 
-**Testes**
-- 18 de unidade: validação de organização e usuário, vigência, extensão de direito, pagamento
-- 6 de integração em schema isolado no Neon, derrubado ao final, com varredura de órfãos acima de 24h
-- Suíte roda duas vezes seguidas sem sujeira — verificado
+**Testes** — 17 de unidade (validação de usuário, fatiamento, vigência, reindexação, determinismo do provedor) e 7 de integração em schema isolado no Neon, derrubado ao final, com varredura de órfãos.
 
 ## Ainda não existe
 
 - Autenticação — nenhum endpoint é protegido
-- Endpoints de negócio: cadastro, compra simulada, perfil
-- Módulos `Copiloto` e `Mentoria` — pastas ainda vazias
-- `IProvedorDeIa` — depende de chave de IA
-- Esteira de ingestão e pgvector
-- Aplicação de migration no deploy; hoje é manual, da máquina de quem desenvolve
+- Provedor de IA real — `Ai:ApiKey` preenchida hoje faz a API falhar no boot, de propósito
+- Organização, assinatura, mentoria — voltam quando o domínio estiver definido (D-16)
+- Ingestão a partir de arquivo: hoje o texto vai no corpo da requisição
+- Aplicação de migration no deploy; hoje é manual
 
 ## Como rodar
 
@@ -75,13 +68,14 @@ dotnet run --project src/Praxis.Api --urls http://localhost:5000
 dotnet test Praxis.slnx
 ```
 
-Swagger em `http://localhost:5000/swagger`. Deploy e variáveis de ambiente em [deploy.md](deploy.md).
+Swagger em `http://localhost:5000/swagger`. Deploy e variáveis em [deploy.md](deploy.md); Cloudflare em [cloudflare.md](cloudflare.md).
 
 ## Travas conhecidas
 
 | Trava | Efeito |
 |---|---|
-| Sem chave de IA | Copiloto não sai do papel; a abstração pode ser escrita e testada com implementação falsa |
-| Whisper em espera | Transcrição fora da esteira |
-| Entrega de vídeo indefinida (D-08) | O R2 guarda o arquivo, mas transcode e HLS continuam em aberto |
+| Sem chave de IA | Recuperação roda, mas com vetores de reserva; qualidade não é mensurável |
+| Sem conjunto de perguntas-gabarito | Não há como afirmar que a recuperação melhorou ou piorou |
+| Whisper em espera | Transcrição de aula fora da esteira |
+| Stream não contratado | Vídeo fica no R2, sem qualidade adaptativa (ver cloudflare.md) |
 | Credenciais descartáveis | Circularam por chat; trocar antes de qualquer uso real |

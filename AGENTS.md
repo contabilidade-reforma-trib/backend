@@ -56,10 +56,12 @@ Alteração cosmética, ajuste de teste, log, rename local e correção óbvia n
 
 ### 2.3 Nomes dizem o que a coisa faz
 
-- Nome de classe, método, variável e tabela deve ser legível por quem nunca viu o código. `CalcularNecessidadeDeGiroNoMesDeVirada` vence `CalcGiro`.
+- Nome de classe, método, variável e tabela deve ser legível por quem nunca viu o código. `CalculateWorkingCapitalGap` vence `CalcGap`.
 - Nada de abreviação inventada, `Helper`, `Manager`, `Util`, `Service` genérico, `data`, `obj`, `tmp`.
-- **Idioma:** o domínio é escrito em **português** (`Trilha`, `Aula`, `Assinatura`, `SaldoCredor`, `Aliquota`), porque os termos são intraduzíveis sem perda. Termos técnicos e de infraestrutura ficam em **inglês** (`Repository`, `Handler`, `CancellationToken`, `Endpoint`). Não misture no mesmo identificador.
-- Boolean começa com `Esta`, `Possui`, `Deve`, `Pode` (`PossuiAssinaturaAtiva`).
+- **Idioma: tudo em inglês.** Domínio e técnico, classe, método, variável, tabela, coluna, nome de teste: `User`, `KnowledgeDocument`, `SearchNearest`, `identity_users`.
+- A exceção são termos legais brasileiros sem tradução honesta — `SimplesNacional`, `LucroPresumido`, `CNPJ`. Traduzir isso inventa vocabulário que ninguém usa. Estão no [glossário](docs/glossario.md).
+- Boolean começa com `Is`, `Has`, `Should`, `Can` (`IsConfigured`, `HasValidAccess`).
+- Nome de teste em inglês, descrevendo comportamento: `Should_reject_invalid_email`.
 
 ### 2.4 Escalabilidade não é otimização prematura aqui
 
@@ -108,39 +110,52 @@ dotnet test
 
 ## 3. Arquitetura em uma tela
 
-Monolito modular. Um processo, módulos com fronteira real.
+Monolito modular. Um processo, e **cada camada de cada módulo é um projeto**. A fronteira deixa de depender de disciplina e passa a ser imposta pelo compilador: se a referência não existe, o código não compila.
 
 ```
 backend/
   Praxis.slnx
   src/
-    Praxis.Api/            camada de API: endpoints, DI, middleware, autenticação
-    Praxis.Modules/        um projeto, uma pasta por contexto delimitado
-      Identidade/          conta, organização, usuários, acesso
-      Assinaturas/         planos, compra, o que cada assinatura libera
-      Copiloto/            consultas, RAG, fontes, custo
-      Mentoria/            trilhas, módulos, aulas, progresso, materiais
-        Domain/            entidades, regras, invariantes — não referencia nada de fora
-        Application/       casos de uso, orquestração, contratos
-        Infrastructure/    banco, storage, serviços externos
-    Praxis.Shared/         kernel comum: tipos base, Result, abstrações de infra
+    Praxis.Api/                    camada de API: endpoints, DI, middleware
+    Praxis.Shared/                 kernel comum: Result, IClock, IAiProvider, IObjectStorage
+    Modules/
+      Identity/
+        Praxis.Identity.Domain/            entidades, regras, invariantes
+        Praxis.Identity.Application/       casos de uso e contratos públicos
+        Praxis.Identity.Infrastructure/    EF Core, repositórios, IdentityDbContext
+      Copilot/
+        Praxis.Copilot.Domain/
+        Praxis.Copilot.Application/
+        Praxis.Copilot.Infrastructure/     EF Core, pgvector, CopilotDbContext
   tests/
-    Praxis.UnitTests/
-    Praxis.IntegrationTests/
+    Praxis.UnitTests/              domínio e casos de uso
+    Praxis.IntegrationTests/       banco de verdade, schema isolado
 ```
 
-Direção das dependências, sempre: `Api → Application → Domain` e `Infrastructure → Application/Domain`. **`Domain` não referencia `Application`, `Infrastructure` nem pacote de framework.**
+Referências permitidas, e nenhuma outra:
 
-Um módulo **nunca** lê tabela de outro módulo.
+| Projeto | Referencia |
+|---|---|
+| `Praxis.Shared` | nada |
+| `<Módulo>.Domain` | `Shared` |
+| `<Módulo>.Application` | o próprio `Domain`, `Shared` |
+| `<Módulo>.Infrastructure` | o próprio `Application` |
+| `Praxis.Api` | os `Infrastructure` de cada módulo |
+
+**`Domain` não referencia `Application`, `Infrastructure` nem pacote de framework.**
+
+### Fronteira entre módulos
+
+**Um DbContext por módulo.** `IdentityDbContext` conhece só as tabelas de Identity; `CopilotDbContext`, só as de Copilot. Ler tabela alheia deixa de ser proibido por convenção e passa a ser impossível: o contexto não sabe que aquelas entidades existem. Os dois apontam para o mesmo banco e cada um tem sua própria tabela de histórico de migration.
 
 **A única porta entre módulos é a camada `Application`.** Concretamente:
 
 - O módulo dono expõe, em `Application`, um **contrato público**: `QueryService` para leitura e caso de uso para escrita, trocando **DTO**.
-- O consumidor injeta a interface desse contrato. Não referencia `Domain` nem `Infrastructure` do outro módulo.
+- O consumidor referencia **apenas o `Application` do outro módulo** — nunca o `Domain` nem o `Infrastructure`.
 - **Entidade de domínio nunca atravessa a fronteira.** Sai DTO, entra DTO.
-- Nada de `JOIN`, view ou `DbContext` cruzando módulo. Cada módulo é dono das suas tabelas.
+- Nada de `JOIN`, view ou `DbContext` cruzando módulo.
 
-Exemplo: `Copiloto` precisa saber se a organização pode consultar. Ele injeta `IConsultaDeDireitoDeUso` (exposta por `Assinaturas.Application`), recebe um DTO e segue. Ele não conhece a tabela, a entidade nem a regra de vigência — e não guarda cópia da resposta.
+Hoje `Identity` e `Copilot` não conversam. Quando precisarem, é assim: o consumidor ganha uma referência de projeto para o `Application` do outro e injeta a interface. Se você se pegar querendo referenciar `Domain` ou `Infrastructure` alheio, o desenho está errado.
 
 ### 3.1 Acesso a dados: EF Core primeiro
 
