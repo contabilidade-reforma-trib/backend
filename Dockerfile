@@ -2,24 +2,24 @@
 #
 # O Railpack, detector padrão do Railway, procura um .csproj ou .sln na raiz do
 # repositório. Aqui a raiz tem Praxis.slnx (formato novo, que ele ainda não
-# reconhece) e os projetos vivem em src/ — então a detecção falha antes de
-# começar. Com Dockerfile o Railway usa este arquivo e a detecção sai do caminho.
+# reconhece) e os projetos vivem em src/. Com Dockerfile o Railway usa este
+# arquivo e a detecção sai do caminho.
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-# Os .csproj vêm primeiro e sozinhos: assim a camada de restore só é refeita
-# quando uma dependência muda, e não a cada alteração de código.
-COPY src/Praxis.Shared/Praxis.Shared.csproj src/Praxis.Shared/
-COPY src/Praxis.Modules/Praxis.Modules.csproj src/Praxis.Modules/
-COPY src/Praxis.Api/Praxis.Api.csproj src/Praxis.Api/
-RUN dotnet restore src/Praxis.Api/Praxis.Api.csproj
-
+# Copiar o código inteiro e restaurar de uma vez.
+#
+# A versão anterior copiava cada .csproj antes, para o restore virar uma camada
+# de cache. Com um projeto por camada de cada módulo isso vira uma lista que
+# precisa ser editada a cada módulo novo — e foi exatamente o que quebrou o
+# deploy quando a estrutura mudou. Trocamos alguns segundos de build por um
+# arquivo que não sabe quantos projetos existem.
 COPY src/ src/
+
 RUN dotnet publish src/Praxis.Api/Praxis.Api.csproj \
     -c Release \
-    -o /app/publish \
-    --no-restore
+    -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app

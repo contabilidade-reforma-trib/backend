@@ -25,9 +25,9 @@ O ASP.NET Core lê configuração aninhada com **dois underscores** no lugar do 
 
 | Variável | Valor |
 |---|---|
-| `ConnectionStrings__Principal` | `Host=...neon.tech;Database=neondb;Username=...;Password=...;SSL Mode=Require` |
+| `ConnectionStrings__Primary` | `Host=...neon.tech;Database=neondb;Username=...;Password=...;SSL Mode=Require` |
 
-**Não configure CORS.** O front fala com esta API pelo servidor do Next (BFF, D-14), e chamada de servidor para servidor não passa por CORS. Se você já criou `Cors__OrigensPermitidas__0`, pode remover.
+**Não configure CORS.** O front fala com esta API pelo servidor do Next (BFF, D-14), e chamada de servidor para servidor não passa por CORS. Se você criou `Cors__OrigensPermitidas__0`, pode apagar — a chave agora é `Cors__AllowedOrigins__0` e continua sem uso.
 
 `ASPNETCORE_ENVIRONMENT` já vem como `Production` do Dockerfile; só defina se quiser outro valor.
 
@@ -39,15 +39,17 @@ O ASP.NET Core lê configuração aninhada com **dois underscores** no lugar do 
 
 | Variável | Valor |
 |---|---|
-| `ArmazenamentoObjetos__AccountId` | id da conta Cloudflare |
-| `ArmazenamentoObjetos__Endpoint` | `https://<account-id>.r2.cloudflarestorage.com` |
-| `ArmazenamentoObjetos__AccessKeyId` | access key do token R2 |
-| `ArmazenamentoObjetos__SecretAccessKey` | secret do token R2 |
-| `ArmazenamentoObjetos__BucketVideos` | `praxis-videos` |
-| `ArmazenamentoObjetos__BucketDocumentos` | `praxis-documentos` |
-| `ArmazenamentoObjetos__Regiao` | `auto` |
+| `ObjectStorage__AccountId` | id da conta Cloudflare |
+| `ObjectStorage__Endpoint` | `https://<account-id>.r2.cloudflarestorage.com` |
+| `ObjectStorage__AccessKeyId` | access key do token R2 |
+| `ObjectStorage__SecretAccessKey` | secret do token R2 |
+| `ObjectStorage__VideoBucket` | `praxis-videos` |
+| `ObjectStorage__DocumentBucket` | `praxis-documentos` |
+| `ObjectStorage__Region` | `auto` |
 
-Sem essas, a API **sobe do mesmo jeito** e o healthcheck reporta `armazenamento.configurado: false`. É deliberado: não faz sentido derrubar a API inteira porque o storage de vídeo ainda não existe.
+> **As chaves mudaram de nome** quando o backend passou a ser todo em inglês (D-15). Se você configurou `ArmazenamentoObjetos__*` antes, apague e recrie com os nomes acima — a aplicação ignora as antigas em silêncio e o healthcheck reporta `storage.configured: false`.
+
+Sem essas, a API **sobe do mesmo jeito** e o healthcheck reporta `storage.configured: false`. É deliberado: não faz sentido derrubar a API inteira porque o storage de vídeo ainda não existe.
 
 ### Ainda não usadas — deixe vazias até contratar
 
@@ -70,7 +72,7 @@ Automatizar isso no start da aplicação é tentador e perigoso: duas instância
 ## 4. Conferindo que subiu
 
 ```bash
-curl https://<seu-app>.up.railway.app/api/saude
+curl https://<seu-app>.up.railway.app/api/health
 ```
 
 Resposta esperada:
@@ -79,12 +81,12 @@ Resposta esperada:
 {
   "status": "ok",
   "servico": "praxis-api",
-  "banco": { "conectado": true, "latenciaMs": 40, "erro": null },
-  "armazenamento": { "configurado": true }
+  "database": { "connected": true, "latencyMs": 40, "error": null },
+  "storage": { "configured": true }
 }
 ```
 
-`status: "degradado"` significa que a API está no ar mas o banco não respondeu — a diferença importa, e é por isso que o endpoint devolve 200 nos dois casos em vez de derrubar a checagem.
+`status: "degraded"` significa que a API está no ar mas o banco não respondeu — a diferença importa, e é por isso que o endpoint devolve 200 nos dois casos em vez de derrubar a checagem.
 
 A documentação da API fica em `https://<seu-app>.up.railway.app/swagger`, ligada também em produção porque é POC e quem integra o front precisa enxergar o contrato.
 
