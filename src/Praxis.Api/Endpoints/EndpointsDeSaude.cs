@@ -40,12 +40,20 @@ public static class EndpointsDeSaude
 
         try
         {
-            bancoConectado = await contexto.Database.CanConnectAsync(cancellationToken);
+            // Abrir a conexão de verdade, em vez de CanConnectAsync: aquele
+            // devolve false engolindo a exceção, e o motivo — senha errada, host
+            // inexistente, SSL recusado — é justamente o que se precisa saber
+            // quando o banco não responde em produção.
+            await contexto.Database.OpenConnectionAsync(cancellationToken);
+            await contexto.Database.CloseConnectionAsync();
+            bancoConectado = true;
         }
         catch (Exception excecao)
         {
             bancoConectado = false;
-            erroDoBanco = excecao.Message;
+
+            // Só a mensagem, nunca a string de conexão: ela carrega a senha.
+            erroDoBanco = excecao.GetBaseException().Message;
         }
 
         cronometro.Stop();
