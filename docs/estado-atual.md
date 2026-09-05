@@ -49,7 +49,7 @@ API de pé, conectada ao Neon, com as entidades de Identidade e Assinaturas, Swa
 - `GET /api/saude` — status, versão, ambiente, banco (conectado + latência) e armazenamento
 - `GET /api/saude/ping` — verificação mínima, não toca no banco
 - Swagger em `/swagger`; a raiz redireciona para lá
-- CORS por configuração (`Cors:OrigensPermitidas`)
+- CORS existe como escape, mas **não é usado**: o front chega pelo BFF do Next (D-14). Lista vazia = nenhuma origem permitida
 
 **Testes**
 - 18 de unidade: validação de organização e usuário, vigência, extensão de direito, pagamento

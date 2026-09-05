@@ -41,6 +41,12 @@ O contador compra para si, mas pode colocar funcionários do escritório para us
 **Decisão:** mesmo banco Neon, schema `teste_<guid>` por execução, derrubado no fim, com limpeza garantida mesmo em falha e varredura de schemas órfãos com mais de 24h.
 **Consequência:** não precisa de segundo banco na POC e não há risco de sujar o `public`.
 
+### D-14 · O front fala com o backend por um BFF, não direto do navegador
+Chamada direta do navegador para a API obrigava `NEXT_PUBLIC_API_URL` no bundle, CORS no backend, e — o que pesou de verdade — colocaria o token de sessão em lugar acessível por JavaScript quando a autenticação chegasse.
+**Decisão:** o navegador só fala com a origem da Vercel. Route handlers em `src/app/api/` rodam no servidor do Next e repassam para o backend, usando `API_URL` (variável de servidor, fora do bundle).
+**Consequência:** o backend deixa de precisar de CORS, e a lista vazia de origens passa a significar *nenhuma origem permitida* em vez de *todas*. O token de autenticação vai viver em cookie `httpOnly`, ilegível para o JavaScript da página. Custos aceitos: um salto a mais de rede, invocações de função na Vercel, e cuidado extra quando o streaming do copiloto atravessar o proxy.
+**Tomada antes da autenticação de propósito** — depois dela, mudar exigiria reescrever o fluxo de login.
+
 ---
 
 ## Abertas

@@ -1,9 +1,14 @@
 namespace Praxis.Api.Configuracao;
 
 /// <summary>
-/// O front roda na Vercel, em outro domínio, então sem CORS o healthcheck do
-/// front nem sai do navegador. As origens vêm da configuração para que
-/// adicionar um domínio de preview não exija recompilar.
+/// Nenhum navegador chama esta API diretamente: o front usa o servidor do Next
+/// como BFF, e é ele quem fala com o backend. Chamada de servidor para servidor
+/// não passa por CORS — ver D-14 em docs/decisoes.md.
+///
+/// A política existe como escape para casos pontuais (uma ferramenta externa,
+/// um teste manual), e por isso **lista vazia significa nenhuma origem
+/// permitida**. Liberar geral no silêncio da falta de configuração seria abrir
+/// o backend para qualquer site sem ninguém decidir isso.
 /// </summary>
 public static class ConfiguracaoDeCors
 {
@@ -19,10 +24,6 @@ public static class ConfiguracaoDeCors
         {
             if (origens.Length == 0)
             {
-                // Sem lista configurada, a POC aceita qualquer origem — vale para
-                // subir e testar rápido, e é a primeira coisa a fechar quando o
-                // produto deixar de ser protótipo.
-                politica.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
                 return;
             }
 

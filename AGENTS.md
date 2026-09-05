@@ -68,13 +68,21 @@ Alteração cosmética, ajuste de teste, log, rename local e correção óbvia n
 - Nenhuma operação longa (transcode, transcrição, indexação) roda dentro do request HTTP — vai para fila/worker.
 - Custo de IA é medido e gravado por consulta e por usuário desde o primeiro dia (ver [decisões](docs/decisoes.md), D-07).
 
-### 2.5 Segredo não entra no repositório
+### 2.5 Nenhum navegador chama esta API diretamente
+
+O front usa o servidor do Next como BFF (D-14). A API recebe chamadas de servidor para servidor, que não passam por CORS.
+
+- **Não presuma CORS para fazer o front funcionar.** Se algo só funciona com CORS aberto, o desenho está errado.
+- Lista de origens vazia significa **nenhuma origem permitida**, não todas.
+- Quando entrar autenticação, o backend recebe o token em cabeçalho, posto pelo BFF. Não desenhe fluxo que dependa de cookie de navegador chegando aqui.
+
+### 2.6 Segredo não entra no repositório
 
 - Credenciais ficam em `appsettings.Development.json` (ignorado pelo git) e, em produção, nas variáveis de ambiente do Railway.
 - `appsettings.json` é versionado e só tem chaves vazias.
 - Se você precisar de um segredo novo, adicione a **chave vazia** no `appsettings.json` e peça o valor ao usuário.
 
-### 2.6 Antes de commitar: revisão obrigatória
+### 2.7 Antes de commitar: revisão obrigatória
 
 Quando o commit é feito por IA, ele **não** é feito direto. Antes de `git commit`:
 
@@ -85,7 +93,7 @@ Quando o commit é feito por IA, ele **não** é feito direto. Antes de `git com
 
 A revisão é sobre o diff preparado, não sobre o repositório inteiro.
 
-### 2.7 Antes de dar push: suíte inteira verde
+### 2.8 Antes de dar push: suíte inteira verde
 
 Quando o push é feito por IA, antes de `git push`:
 
@@ -179,5 +187,5 @@ dotnet run --project src/Praxis.Api
 
 Não faça commit nem push sem o usuário pedir. Quando pedir:
 
-- **Commit** → revisão de [docs/revisao-pre-commit.md](docs/revisao-pre-commit.md) antes, achados relatados (§2.6).
-- **Push** → suíte inteira verde antes (§2.7).
+- **Commit** → revisão de [docs/revisao-pre-commit.md](docs/revisao-pre-commit.md) antes, achados relatados (§2.7).
+- **Push** → suíte inteira verde antes (§2.8).

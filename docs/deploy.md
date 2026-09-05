@@ -26,13 +26,14 @@ O ASP.NET Core lê configuração aninhada com **dois underscores** no lugar do 
 | Variável | Valor |
 |---|---|
 | `ConnectionStrings__Principal` | `Host=...neon.tech;Database=neondb;Username=...;Password=...;SSL Mode=Require` |
-| `Cors__OrigensPermitidas__0` | `https://<seu-projeto>.vercel.app` |
+
+**Não configure CORS.** O front fala com esta API pelo servidor do Next (BFF, D-14), e chamada de servidor para servidor não passa por CORS. Se você já criou `Cors__OrigensPermitidas__0`, pode remover.
 
 `ASPNETCORE_ENVIRONMENT` já vem como `Production` do Dockerfile; só defina se quiser outro valor.
 
-> **CORS é lista indexada.** Cada origem é uma variável própria: `Cors__OrigensPermitidas__0`, `__1`, `__2`. Sem nenhuma configurada a API aceita qualquer origem — bom para destravar a POC, ruim para deixar assim.
+> A política de CORS continua existindo como escape para caso pontual — uma ferramenta externa, um teste manual. Se precisar, cada origem é uma variável indexada: `Cors__OrigensPermitidas__0`, `__1`. Lista vazia significa **nenhuma origem permitida**.
 >
-> Os domínios de *preview* da Vercel mudam a cada deploy. Para testar preview, adicione o domínio específico como mais um índice.
+> Como o front passa pelo BFF, os domínios de preview da Vercel deixaram de ser um problema: eles não precisam estar em lugar nenhum aqui.
 
 ### Armazenamento (Cloudflare R2)
 
@@ -89,7 +90,7 @@ A documentação da API fica em `https://<seu-app>.up.railway.app/swagger`, liga
 
 ## 5. Quando deixar de ser POC
 
-- Fechar o CORS na lista exata de domínios.
+- Tornar a API alcançável só pela Vercel, em vez de pública na internet.
 - Tirar o Swagger de produção, ou colocá-lo atrás de autenticação.
 - Trocar todas as credenciais — as atuais circularam por chat e por WhatsApp.
 - Aplicar migration por passo de deploy, não da máquina de alguém.
