@@ -12,7 +12,7 @@ Ative os hooks de git uma vez por clone:
 git config core.hooksPath .githooks
 ```
 
-Documentos complementares: [produto](docs/produto.md) · [arquitetura](docs/arquitetura.md) · [regras de desenvolvimento](docs/regras-desenvolvimento.md) · [glossário](docs/glossario.md) · [decisões](docs/decisoes.md) · [estado atual](docs/estado-atual.md) · [em andamento](docs/em-andamento.md) · [backlog](docs/backlog.md)
+Documentos complementares: [produto](docs/produto.md) · [cloudflare](docs/cloudflare.md) · [arquitetura](docs/arquitetura.md) · [regras de desenvolvimento](docs/regras-desenvolvimento.md) · [glossário](docs/glossario.md) · [decisões](docs/decisoes.md) · [estado atual](docs/estado-atual.md) · [em andamento](docs/em-andamento.md) · [backlog](docs/backlog.md)
 
 **Comece toda sessão lendo [docs/em-andamento.md](docs/em-andamento.md)** — é onde está a feature em curso e em que passo ela parou.
 
